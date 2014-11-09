@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html><head>
+<meta name="description" content="Quickbooks Legacy Data Viewer" />
+	<meta http-equiv='X-UA-Compatible' content='IE=edge' />
+	<meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
+	
+	<title>Quickbooks Legacy Data Viewer</title>
+	
+
+	<!-- Load UI5, select gold reflection theme and the "commons" and "table" control libraries -->
+	<script id='sap-ui-bootstrap' type='text/javascript'
+		src='resources/sap-ui-core.js'
+		data-sap-ui-theme='sap_bluecrystal'
+		data-sap-ui-libs='sap.ui.commons,sap.ui.table'></script>
+	
+    <!-- Setup elasticsearch -->
+    <script src="elasticsearch-js/elasticsearch.jquery.js"></script>
+    <script>
+        var client = new $.es.Client({
+            hosts: '192.168.5.222:9200'
+        });
+        
+        // get the current status of the entire cluster.
+        // Note: params are always optional, you can just send a callback
+        client.cluster.health(function (err, resp) {
+          if (err) {
+            console.error(err.message);
+          } else {
+            console.dir(resp);
+          }
+        });
+
+        // index a document
+        client.index({
+          index: 'blog',
+          type: 'post',
+          id: 1,
+          body: {
+            title: 'JavaScript Everywhere!',
+            content: 'It all started when...',
+            date: '2013-12-17'
+          }
+        }, function (err, resp) {
+          // ...
+        });
+
+        var srchResp;
+        
+        // search for documents (and also promises!!)
+        client.search({
+          index: 'quickbooks',
+          size: 50,
+          body: {
+            query: {
+              match: {
+                _all:'hitchcock'
+              }
+            }
+          }
+        }).then(function (resp) {
+            srchResp = resp;
+            
+        oModel.setData({modelData: srchResp});
+		oTable.setModel(oModel);
+		oTable.bindRows("/modelData/hits/hits");
+		
+        oTable.addColumn(new sap.ui.table.Column({
+        label: new sap.ui.commons.Label({text: "Company Name"}),
+        template: new sap.ui.commons.TextView().bindProperty("text", "_source/CompanyName"),
+        width: "200px"
+        }));
+
+        oTable.addColumn(new sap.ui.table.Column({
+        label: new sap.ui.commons.Label({text: "FullName"}),
+        template: new sap.ui.commons.TextView().bindProperty("text", "_source/FullName"),
+        width: "200px"
+        }));
+
+         oTable.addColumn(new sap.ui.table.Column({
+        label: new sap.ui.commons.Label({text: "City"}),
+        template: new sap.ui.commons.TextView().bindProperty("text", "_source/ShipAddressCity "),
+        width: "200px"
+        }));
+
+             
+		// finally place the Table into the UI
+		oTable.placeAt("content");
+                
+        });
+    </script>
+    
+    
+    <script>
+    
+    
+    <!-- Setup aplication -->
+    	//create the ApplicationHeader control
+		var oAppHeader = new sap.ui.commons.ApplicationHeader("appHeader"); 
+
+		//configure the branding area
+		oAppHeader.setLogoSrc("images/Torchmate-Logo.png");
+		oAppHeader.setLogoText("Quickbooks Legacy Data Viewer");
+
+		//configure the welcome area
+		oAppHeader.setDisplayWelcome(false);
+		//oAppHeader.setUserName("John Doe");
+
+		//configure the log off area
+		oAppHeader.setDisplayLogoff(false);
+
+		oAppHeader.placeAt("header");    
+        
+		
+		// create the DataTable control
+		var oTable = new sap.ui.table.Table({editable:false});
+		
+		// define the Table columns
+		//Define the columns and the control templates to be used
+/*
+        oTable.addColumn(new sap.ui.table.Column({
+            label: new sap.ui.commons.Label({text: "Full Name"}),
+            template: new sap.ui.commons.TextView().bindProperty("text", "_source/FullName"),
+            sortProperty: "_source/FullName",
+            filterProperty: "_source/FullName",
+            width: "200px"
+        }));
+*/
+/*
+        oTable.addColumn(new sap.ui.table.Column({
+            label: new sap.ui.commons.Label({text: "total"}),
+            template: new sap.ui.commons.TextView().bindProperty("text", "total"),
+            width: "200px"
+        }));
+*/
+		
+		// create some local data
+		var aData = [
+			{lastName: "Dente", name: "Al", checked: true, linkText: "www.sap.com", href: "http://www.sap.com", rating: 4},
+			{lastName: "Friese", name: "Andy", checked: true, linkText: "https://experience.sap.com/fiori", href: "https://experience.sap.com/fiori", rating: 2},
+			{lastName: "Mann", name: "Anita", checked: false, linkText: "http://www.saphana.com/", href: "http://www.saphana.com/", rating: 3}
+		];
+		
+		// create a JSONModel, fill in the data and bind the Table to this model
+		var oModel = new sap.ui.model.json.JSONModel();
+
+//		oModel.setData({modelData: srchResp});
+//		oTable.setModel(oModel);
+//		oTable.bindRows("/modelData/hits/hits/_source");
+//		oTable.bindRows("/modelData");
+		
+		// finally place the Table into the UI
+		oTable.placeAt("content");
+		
+	</script>
+	
+	</head>
+	<body class='sapUiBody'>
+        <div id='header'></div>
+		<div id='content'></div>
+	</body>
+</html>
